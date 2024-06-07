@@ -1,0 +1,51 @@
+server:
+  port: 9462
+
+spring:
+  application:
+    name: SOCKET-SERVICE
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+websocket:
+  host: "ws://localhost:9462/ws"
+
+
+cors:
+  allowed-origins: 'http://localhost:9462'
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: '*'
+  max-age: 3600
+
+messaging:
+  socket: true
+  encryptionEnabled: true
+  ackTime: 60000 # 1분
+  ackLimitCount: 3
+  topic:
+    - "topic1"
+    - "topic2"
+
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    root: DEBUG
+    com.zaxxer.hikari.pool.HikariPool: DEBUG
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql: trace
+      springframework:
+        web: DEBUG
+        data: DEBUG
+      boot:
+        autoconfigure:
+          data:
+            rest: DEBUG
+            jpa: DEBUG
+            orm: DEBUG

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Message Interaction</title>
+    <style>
+        #log {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        textarea {
+            width: 300px;
+            height: 100px;
+            margin-top: 10px;
+        }
+    </style>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var ws;
+
+        // WebSocket 서버에 연결
+        function connectWebSocket() {
+            var websocketHost = [[${websocketHost}]];
+            ws = new WebSocket(websocketHost);
+
+            ws.onmessage = function(event) {
+                // 서버로부터 메시지를 받으면 로그에 표시
+                var log = document.getElementById("log");
+                var message = JSON.parse(event.data);
+                console.log(message)
+                if (message.messageType === "ACK") {
+                    console.log("Received ACK message:", message);
+                } else {
+                    log.innerHTML += "<p>" + message + "</p>";
+                }
+
+            };
+
+            ws.onopen = function(event) {
+                var status = document.getElementById("status");
+                status.textContent = "Connected!";
+
+                // 연결되자마자 "initial_topic" 토픽에 참여 요청을 보냄
+                joinTopic("topic1");
+                joinTopic("topic2");
+            };
+
+            ws.onclose = function(event) {
+                var status = document.getElementById("status");
+                status.textContent = "Disconnected!";
+            };
+
+            ws.onerror = function(event) {
+                console.error("WebSocket error:", event);
+            };
+        }
+
+        // 특정 토픽에 참여하기 위한 함수
+        function joinTopic(topic) {
+            var message = {
+                receiver: null,
+                topic: topic,
+                messageType: "ENTER",
+                data: null
+            };
+            ws.send(JSON.stringify(message));
+        }
+
+        // 메시지 전송 함수
+        function sendMessage() {
+            var topic = document.getElementById("topic").value;
+            var data = document.getElementById("data").value;
+
+            var message = {
+                receiver: null,
+                topic: topic,
+                messageType: "MESSAGE",
+                data: data
+            };
+
+            fetch('/api/message/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            }).then(response => {
+                if (response.ok) {
+                    alert("Message sent successfully!");
+                } else {
+                    alert("Failed to send message");
+                }
+            }).catch(error => {
+                console.error('Error sending message:', error);
+                alert("Error sending message");
+            });
+        }
+
+        // 페이지 로드 시 WebSocket에 연결
+        window.onload = function() {
+            connectWebSocket();
+        };
+        /*]]>*/
+    </script>
+</head>
+<body>
+<h2>WebSocket Message Interaction</h2>
+<div>Status: <span id="status">Disconnected</span></div>
+<div>
+    <label for="topic">Topic:</label>
+    <input type="text" id="topic" placeholder="Enter Topic">
+</div>
+<div>
+    <label for="data">Message:</label>
+    <textarea id="data" placeholder="Enter Message" ></textarea>
+</div>
+<button onclick="sendMessage()">Send</button>
+<div id="log"></div>
+</body>
+</html>
